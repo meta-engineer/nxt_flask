@@ -1,53 +1,96 @@
-# NXT
+# Database Schema
 
-## App Design Bird's-Eye
+## Programs Overview
 
-1. One Time Splash page
-	- just text/graphics?
-	- *navigate to 2.Login*
-2. Login
-	- integrate with Google login?
-	- cookies/sessions?
-	- *navigate to 3.Home*
-3. Home
-	- navigation
-	- user info?
-	- *navigate to 4.Profile, 5.Suppliments, 6.Catalog, 7.Tracker/Stats, 8.Social, 9.Routine*
-4. Profile
-	- remote database server for user data
-	- "Player Card": query user table
-	- Stats
-		- images: profile picture
-		- static size stats: individual 1RM, lift deltas, streaks, max inspirations
-		- dynamic size stats: awards, weight tracking, program progress
-	- Journal entries
-	- integrate social media?
-	- *navigate to 3.Home*
-5. Suppliments
-	- storefront: set/user query suppliments table
-	- integration to payment service? paypal?
-	- *navigate to 3.Home*
-6. Exercises
-	- catalog: set/user query exercise table
-	- subtables: program, muscle group, goal
-	- query user data for permissions
-	- GIF/VIDEO storage (multiple videos? short/long versions?)
-	- *navigate to 3.Home*
-7. Tracker/Stats
-	- what is this, statistics about ants?
-	- some sort of accessor to logged-in user table
-	- *navigate to 3.Home*
-8. Social
-	- friends/leaderboards
-	- search user table for names? view "player card" or some other static size query?
-	- at best just queries to user tables and displaying top results
-	- at worst message posting/realtime chat
-	- database table for timed challenges? storage for top scores?
-	- *navigate to 3.Home*
-9. Routines
-	- table with list of {sets, reps, exercise}
-	- complicated details? rest between sets? supersets?
-	- metadata: written information/description
-	- gif/video per exercise (query exercise table)
-	- store user progress for particular routine in user table. hash map to routines table?
-	- *navigate to 3.Home*
+Each of the following outline a table prototype. The basic heirarchy of a Program is a tree of Many-To-One relationships in the following order: 
+
+Programs -> Phases -> Workouts -> Rounds -> Exercises
+
+Additionally each Program has a One-To-One relation with a Schedule
+
+## Note: 
+>MtO = Many-to-One
+
+## Tables:
+
+### Programs:
+
+| element | type | note |
+| --- | --- | --- |
+| id | int | primary key |
+| name | string | 
+| Phases | MtO relation | 
+| Schedule | Foreign Key | 
+
+### Phases:
+
+| element | type | note |
+| --- | --- | --- |
+| id | int | primary key | 
+| name| string | 
+| objective| string | 
+| note| string | 
+| expectations | note | 
+| frequency | string(?) | 
+| Program parent | foreign key |  
+| Workouts | MtO relation | 
+
+### Workouts (aka "days")
+
+| element | type | note |
+| --- | --- | --- |
+| id | int | primary key, id==0 is reserved for rest day| 
+| name | string | 
+| Phase parent | foreign key| 
+| Rounds | MtO relation | 
+
+### Rounds (association table between Workouts and Exercises)
+
+| element | type | note |
+| --- | --- | --- |
+| id | int | primary key| 
+| name| string | 
+| Workout parent | foreign key | 
+| Exercise | MtM  relation | Unidirectional |
+| sets | int | 
+| reps | int | 
+| rest (inter-set) | duration |
+| rest (inter-Round) | duration | 
+| Regression Exercise | MtO relation | Null is no regression| 
+| optional flag | bool|
+| Round SuperSet children | MtO relation | Super set is executed by performing the parent Round, and then recursively performing all child rounds in order |
+    
+### Exercises
+
+| element | type | note |
+| --- | --- | --- |
+| id | int | primary key | 
+| name| string | 
+| equiptment | enum | 
+| difficulty | enum | 
+| muscle group | int | Actually bitfield? | 
+| image path | string | 
+| video path | string | 
+
+### Schedules
+
+| element | type | note |
+| --- | --- | --- |
+| id | int | primary key|
+| Program parent | foreign key |
+| Schedule_Entrys | MtO relation | Ordered by  Schedule_Entry.order |
+
+### Schedule_Entry (association table between Schedules and Workouts)
+
+| element | type | note |
+| --- | --- | --- |
+| Schedule parent | foreign key, primary key |
+| Workout parent | foreign key, primary key |
+| order | int | equivalent to the "day" of the program |
+
+
+
+## Links 
+- Database structure prototyping: https://docs.google.com/spreadsheets/d/1Su0ZesLQG_JomHWT4xXZbXDonBw7AxLYssfnbZ3_G_g/edit?usp=sharing
+- Exercise Index: https://docs.google.com/spreadsheets/d/1JXlsRK79gpSx6e8Mk89UvJKrWkPmOMt3zibdrUzvdqw/edit#gid=0
+- Program Example: https://docs.google.com/spreadsheets/d/1GlnAioiR8HL8anQDXIo8aZw8ZLZlqPubG13GqZb7KHU/edit#gid=0
